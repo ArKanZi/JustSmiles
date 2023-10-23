@@ -6,9 +6,7 @@ import {
   IconMessageCircle2,
   IconPlus,
   IconSearch,
-  IconSettings,
   IconTable,
-  IconUser,
 } from "@tabler/icons-react";
 
 const NavbarMobile = () => {
@@ -46,8 +44,8 @@ const NavbarMobile = () => {
         <IconSearch />
       </SidebarButtons>
 
-      <dialog ref={modal}>
-        <AddPostPopup close={() => modal.current?.hideModal()} />
+      <dialog className="modal modal-bottom sm:modal-middle" ref={modal}>
+        <AddPostPopup close={() => modal.current?.close()} />
       </dialog>
     </div>
   );

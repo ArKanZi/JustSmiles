@@ -1,8 +1,4 @@
-import {
-  createBrowserRouter,
-  Navigate,
-  RouterProvider,
-} from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import BaseLayout from "../pages/layouts/BaseLayout";
 import Home from "../pages/Home";
 import Login from "../pages/Login";
@@ -19,6 +15,8 @@ import SearchAccounts from "../components/SearchComponents/SearchAccounts";
 import SearchHashtags from "../components/SearchComponents/SearchHashtags";
 import Followers from "../components/FollowersFollowingComponents/Followers";
 import Following from "../components/FollowersFollowingComponents/Following";
+import YourPosts from "../components/AccountComponents/yourPosts";
+import LikedByYou from "../components/AccountComponents/likedByYou";
 
 export const ROUTES = {
   BaseLayout: "/",
@@ -49,6 +47,10 @@ const router = createBrowserRouter([
         path: "search",
         element: <Search />,
         children: [
+          {
+            path: "/search",
+            element: <Navigate replace to="/search/SearchAccounts" />,
+          },
           { path: "SearchAccounts", element: <SearchAccounts /> },
           { path: "SearchHashtags", element: <SearchHashtags /> },
         ],
@@ -68,8 +70,12 @@ const router = createBrowserRouter([
         },
       },
       {
-        path: "account",
+        path: "account/:uid",
         element: <Account />,
+        children: [
+          { path: "yourPosts", element: <YourPosts /> },
+          { path: "LikedByYou", element: <LikedByYou /> },
+        ],
       },
       {
         path: "setting",

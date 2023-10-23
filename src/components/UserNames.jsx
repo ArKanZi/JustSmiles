@@ -1,19 +1,17 @@
-import { useQueryClient } from "react-query";
-import deletePost from "../api/deletePost";
 import UserImg from "../assets/images/userimg.jpg";
 import { IconDotsVertical } from "@tabler/icons-react";
-import { useAuth } from "../context/auth-context";
+import propTypes from "prop-types";
+import { useNavigate } from "react-router-dom";
 
 const UserNames = (props) => {
-  const queryClient = useQueryClient();
-  const { currentUser } = useAuth();
-  const handleDelete = () => {
-    deletePost(props.postDocId);
-    queryClient.resetQueries({ queryKey: ["postList", currentUser.uid] });
-  };
+  const links = props.uid;
+  const navigate = useNavigate();
   return (
     <div className="flex flex-1 flex-row">
-      <button className="flex flex-row h-12">
+      <button
+        className="flex flex-row h-12"
+        onClick={() => navigate(`/account/${links}`)}
+      >
         <div className="avatar">
           <div className="w-12 rounded-full hover:bg-slate-200">
             <img src={UserImg} alt="userimg" />
@@ -22,9 +20,11 @@ const UserNames = (props) => {
         <div className="flex h-full items-center px-2 font-bold">
           <div className="flex flex-col text-left">
             <div className="hover:underline truncate">{props.Name}</div>
-            <div className="font-normal text-neutrals-600">
-              {props.ExtraInfo}
-            </div>
+            {props.isExtraInfoNeed ? (
+              <div className="font-normal text-neutrals-600">
+                @{props.ExtraInfo}
+              </div>
+            ) : null}
           </div>
         </div>
       </button>
@@ -47,7 +47,7 @@ const UserNames = (props) => {
                 </a>
               </li>
               <li>
-                <button onClick={handleDelete}>Delete</button>
+                <button>Delete</button>
               </li>
               <li>
                 <a>Hide</a>
@@ -64,7 +64,16 @@ export default UserNames;
 
 UserNames.defaultProps = {
   Name: "Your Name",
-  ExtraInfo: "@UserName",
+  ExtraInfo: "UserName",
   IndicatorNeed: false,
   MoreOptionNeed: false,
+  isExtraInfoNeed: true,
+};
+UserNames.propTypes = {
+  uid: propTypes.string,
+  Name: propTypes.string,
+  ExtraInfo: propTypes.string,
+  IndicatorNeed: propTypes.bool,
+  MoreOptionNeed: propTypes.bool,
+  isExtraInfoNeed: propTypes.bool,
 };

@@ -7,5 +7,6 @@ export default async function getFollowingByUID(uid) {
   const querySnapshot = await getDocs(getUserPost);
   const following = [];
   querySnapshot.forEach((doc) => following.push(doc.data().following_uid));
+
   return following;
 }

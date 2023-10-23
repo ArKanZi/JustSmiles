@@ -3,6 +3,7 @@ import { auth, firestore } from "../services/firebase";
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
   updatePassword as updatePasswordFB,
@@ -31,7 +32,7 @@ export function AuthProvider({ children }) {
     if (password !== confirmPassword)
       return {
         success: false,
-        error: console.log("Passwords do not match"),
+        error: alert("Passwords do not match"),
       };
     const searchUsername = await query(
       collection(firestore, "users"),
@@ -41,7 +42,7 @@ export function AuthProvider({ children }) {
     if (!querySnapshot.empty) {
       return {
         success: false,
-        error: console.log("Username is already taken"),
+        error: alert("Username is already taken"),
       };
     }
 
@@ -58,7 +59,7 @@ export function AuthProvider({ children }) {
     const userRef = doc(firestore, "users", newUser.uid);
     await setDoc(userRef, {
       name,
-      username: "@" + username,
+      username,
       bio: "",
       githubp: "",
       linkedinp: "",

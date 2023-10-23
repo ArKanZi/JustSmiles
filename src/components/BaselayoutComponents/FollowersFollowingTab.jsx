@@ -9,11 +9,11 @@ const FollowersFollowingTab = (props) => {
   const { currentUser } = useAuth();
   useEffect(() => {});
 
-  const { data: FollowersCount, isLoading: isFollowersCountLoading } = useQuery(
+  const { data: FollowersCount } = useQuery(
     ["FollowersCount", currentUser?.uid],
     () => getFollowersCount(currentUser.uid)
   );
-  const { data: FollowingCount, isLoading: isFollowingCountLoading } = useQuery(
+  const { data: FollowingCount } = useQuery(
     ["FollowingCount", currentUser?.uid],
     () => getFollowingCount(currentUser.uid)
   );
@@ -30,7 +30,7 @@ const FollowersFollowingTab = (props) => {
             </button>
           </Link>
           <Link
-            to="followers-followings/Following"
+            to="followers-followings/Followers"
             className=" border-transparent"
           >
             <button className="stat px-2 place-items-center border-transparent">

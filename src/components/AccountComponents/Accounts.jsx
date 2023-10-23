@@ -1,22 +1,30 @@
 import { useQuery } from "react-query";
 import getCurrentUserDetails from "../../api/getCurrentUserDetails";
-import { useAuth } from "../../context/auth-context";
 import UserNames from "../UserNames";
 import FollowButton from "./FollowButton";
-
+import propTypes from "prop-types";
 import {
-  IconEdit,
   IconBrandGithub,
   IconBrandLinkedin,
   IconBrandTwitterFilled,
 } from "@tabler/icons-react";
-const Accounts = () => {
+import { useAuth } from "../../context/auth-context";
+
+const Accounts = (props) => {
   const { currentUser } = useAuth();
 
   const { data: userData, isLoading: userDataLoading } = useQuery(
-    ["userData", currentUser.uid],
-    () => getCurrentUserDetails(currentUser.uid)
+    ["userData", props.uid],
+    () => getCurrentUserDetails(props.uid)
   );
+
+  if (userDataLoading) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col w-full min-h-48 bg-neutrals-800 rounded-lg">
@@ -24,32 +32,52 @@ const Accounts = () => {
         <div className="flex  h-full w-full">
           <UserNames Name={userData?.name} ExtraInfo={userData?.username} />
         </div>
-        <button className="flex h-full items-center pr-2 rounded-full text-neutrals-600 hover:text-neutrals-400">
-          <a href="setting">
-            <IconEdit stroke={2} size={28} />
-          </a>
-        </button>
       </div>
       <div className="flex py-2 px-4 font-bold text-neutrals-600">Bio</div>
       <div className="w-full flex-1 px-4 py-1">{userData?.bio}</div>
       <div className="flex flex-row w-full p-4 text-neutrals-600">
         <div className="flex flex-row font-bold text-sm">
-          <button className="flex h-full items-center pr-2 rounded-full hover:text-black">
-            <IconBrandGithub stroke={2} size={28} />
-          </button>
-          <button className="flex px-2 items-center hover:text-blue-600">
-            <IconBrandTwitterFilled stroke={2} size={28} />
-          </button>
-          <button className="flex px-2 items-center hover:text-blue-400">
-            <IconBrandLinkedin stroke={2} size={28} />
-          </button>
+          {userData?.githubp ? (
+            <a
+              className="flex h-full items-center pr-2 rounded-full hover:text-black"
+              href={userData?.githubp}
+            >
+              <IconBrandGithub stroke={2} size={28} />
+            </a>
+          ) : null}
+          {userData?.twitterp ? (
+            <a
+              className="flex px-2 items-center hover:text-blue-600"
+              href={userData?.twitterp}
+            >
+              <IconBrandTwitterFilled stroke={2} size={28} />
+            </a>
+          ) : null}
+
+          {userData?.linkedinp ? (
+            <a
+              className="flex px-2 items-center hover:text-blue-400"
+              href={userData?.linkedinp}
+            >
+              <IconBrandLinkedin stroke={2} size={28} />
+            </a>
+          ) : null}
         </div>
         <div className="flex-1"></div>
-        <div>
-          <FollowButton>Follow</FollowButton>
-        </div>
+        {currentUser.uid != props.uid ? (
+          <div>
+            <FollowButton uid={props.uid} fuid={props.uid}>
+              Follow
+            </FollowButton>
+          </div>
+        ) : null}
       </div>
     </div>
   );
 };
+
+Accounts.propTypes = {
+  uid: propTypes.string,
+};
+
 export default Accounts;

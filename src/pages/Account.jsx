@@ -1,10 +1,14 @@
 import { useState } from "react";
 import Accounts from "../components/AccountComponents/Accounts";
 import SearchbarItem from "../components/SearchbarItem";
-import Post from "../components/Post";
+import { Outlet, useParams } from "react-router-dom";
+import { useAuth } from "../context/auth-context";
 
 const Account = () => {
-  const [activeTab, setActiveTab] = useState("ACCOUNTS");
+  const { currentUser } = useAuth();
+  const [activeTab, setActiveTab] = useState("");
+  const params = useParams();
+  const { uid } = params;
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
@@ -13,20 +17,26 @@ const Account = () => {
   return (
     <div>
       <div>
-        <Accounts />
+        <Accounts uid={uid} />
       </div>
       <div className="flex flex-row justify-around w-full py-2 px-2">
         <div className="flex w-full justify-start">
           <SearchbarItem
             isActive={activeTab === "YOUR POST"}
             onClick={() => handleTabClick("YOUR POST")}
+            link={"yourPosts"}
           >
-            <h1 className="px-4">YOUR POST</h1>
+            {currentUser.uid == uid ? (
+              <h1 className="px-4">YOUR POST</h1>
+            ) : (
+              <h1 className="px-4">POST</h1>
+            )}
           </SearchbarItem>
 
           <SearchbarItem
             isActive={activeTab === "LIKED BY YOU"}
             onClick={() => handleTabClick("LIKED BY YOU")}
+            link={"LikedByYou"}
           >
             <h1 className="px-4">LIKED BY YOU</h1>
           </SearchbarItem>
@@ -52,7 +62,9 @@ const Account = () => {
           {/**  ----------------------------- */}
         </div>
       </div>
-      <div>{/* <Post /> */}</div>
+      <div>
+        <Outlet context={{ uid }} />
+      </div>
     </div>
   );
 };
