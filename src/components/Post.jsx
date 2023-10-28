@@ -1,126 +1,175 @@
-import { IconCircleArrowRight } from "@tabler/icons-react";
-import UserNames from "../UserNames";
+import { useState } from "react";
 import {
-  Timestamp,
-  arrayUnion,
-  doc,
-  onSnapshot,
-  serverTimestamp,
-  updateDoc,
-} from "firebase/firestore";
-import { useContext, useEffect, useRef, useState } from "react";
-import { ChatContext } from "../../context/ChatContext";
-import { firestore } from "../../services/firebase";
-import { useAuth } from "../../context/auth-context";
-import { v4 as uuid } from "uuid";
+  IconHeart,
+  IconHeartFilled,
+  IconTrash,
+  IconMessage,
+  IconDotsVertical,
+  IconBrandTwitterFilled,
+} from "@tabler/icons-react";
 import moment from "moment";
-const ChartArea = () => {
-  const [messages, setMessages] = useState([]);
-  const { data } = useContext(ChatContext);
-  const [text, setText] = useState("");
+import { useAuth } from "../context/auth-context";
+import { useQuery, useQueryClient } from "react-query";
+import UserNames from "./UserNames";
+import createPostLike from "../api/createpostLike";
+import getPostlikes from "../api/getPostlikes";
+import getPostLikedByUser from "../api/getPostLikedByUser";
+import deletePost from "../api/deletePost";
+import { useNavigate } from "react-router-dom";
+import createComment from "../api/createComment";
+import getComments from "../api/getComments";
+import Comments from "./Comment";
+import getCommentsCount from "../api/getCommentsCount";
+
+const Post = ({ body, time, username, name, postDocId, uid }) => {
+  const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const ref = useRef();
+  const [isCommented, setIsCommented] = useState(false);
+  const [comment, setComment] = useState("");
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const unSub = onSnapshot(doc(firestore, "chats", data.chatId), (doc) => {
-      doc.exists() && setMessages(doc.data().messages);
+
+  const tweetNow = () => {
+    let tweetPost = `https://twitter.com/intent/tweet?text=${body}`;
+    window.open(tweetPost);
+  }
+  const { data: likes, isLoading: isLikesLoading } = useQuery(
+    ["Likes", postDocId],
+    () => getPostlikes(postDocId)
+  );
+  const { data: totalComments, isLoading: istotalCommentsLoading } = useQuery(
+    ["totalComments", postDocId],
+    () => getCommentsCount(postDocId)
+  );
+  const { data: likedByUser } = useQuery(
+    ["LikedByUser", postDocId, currentUser.uid],
+    () => getPostLikedByUser(postDocId, currentUser.uid)
+  );
+
+  const { data: commentsList, isLoading: commentsLoading } = useQuery(
+    ["commentsList", postDocId],
+    () => getComments(postDocId)
+  );
+  const handleLikeClick = async () => {
+    await createPostLike(currentUser.uid, postDocId);
+    queryClient.resetQueries({ queryKey: ["Likes", postDocId] });
+    queryClient.resetQueries({
+      queryKey: ["LikedByUser", postDocId, currentUser.uid],
     });
-
-    return () => {
-      unSub();
-    };
-  }, [data.chatId]);
-
-  const handleSend = async (e) => {
-    e.preventDefault();
-
-    await updateDoc(doc(firestore, "chats", data.chatId), {
-      messages: arrayUnion({
-        id: uuid(),
-        text,
-        senderId: currentUser.uid,
-        date: Date.now(),
-      }),
-    });
-
-    await updateDoc(doc(firestore, "userChats", currentUser.uid), {
-      [data.chatId + ".lastMessage"]: {
-        text,
-      },
-      [data.chatId + ".date"]: serverTimestamp(),
-    });
-
-    await updateDoc(doc(firestore, "userChats", data.user.uid), {
-      [data.chatId + ".lastMessage"]: {
-        text,
-      },
-      [data.chatId + ".date"]: serverTimestamp(),
-    });
-
-    setText("");
   };
 
-  useEffect(() => {
-    ref.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  const handleCommentClick = () => {
+    setIsCommented(!isCommented);
+  };
+
+  const handleComment = async (event) => {
+    event.preventDefault();
+    await createComment(
+      currentUser.uid,
+      postDocId,
+      comment,
+      currentUser.displayName
+    );
+    setComment("");
+    queryClient.resetQueries({ queryKey: ["totalComments", postDocId] });
+    queryClient.resetQueries({
+      queryKey: ["commentsList", postDocId],
+    });
+  };
+
+  const handleDeletePost = async () => {
+    await deletePost(postDocId);
+    queryClient.resetQueries({ queryKey: ["postList", currentUser.uid] });
+  };
 
   return (
-    <div className="join-item flex flex-col flex-1 h-full rounded-lg bg-neutrals-800">
-      <div className="w-full h-16 text-center ">
-        <div className="flex flex-1 h-full items-center px-3">
-          <UserNames
-            Name={data.user.displayName}
-            uid={data.user.uid}
-            IndicatorNeed={true}
-            MoreOptionNeed={true}
-          />
-        </div>
+    <div className="flex flex-col w-full min-h-48 bg-neutrals-800 rounded-lg my-4">
+      <div className="flex flex-row w-full h-18 items-center p-2">
+        <UserNames
+          Name={name}
+          ExtraInfo={"@" + username}
+          postDocId={postDocId}
+          link={() => navigate(`/account/${uid}`)}
+          uid={uid}
+        />
       </div>
+      <div className="w-full flex-1 px-4 py-1 whitespace-pre-line">{body}</div>
+      <div className="flex flex-row w-full p-4 text-neutrals-600">
+        <div className="flex flex-row font-bold text-sm">
+          <button
+            className={`flex h-full pr-2 items-center  hover:text-neutrals-400 ${likedByUser ? "text-red-600 hover:text-red-800" : ""
+              }`}
+            onClick={handleLikeClick}
+          >
+            {likedByUser ? <IconHeartFilled /> : <IconHeart />}
+            {isLikesLoading ? "0" : likes}
+          </button>
+          <button
+            className={`flex px-2 items-center  hover:text-neutrals-400 ${isCommented ? "text-blue-600 hover:text-blue-800" : ""
+              }`}
+            onClick={handleCommentClick}
+          >
+            <IconMessage />
+            {totalComments}
+          </button>
+          {currentUser.uid == uid ? (
+            <button
+              className="flex px-2 items-center hover:text-neutrals-400"
+              onClick={handleDeletePost}
+            >
+              <IconTrash />
+            </button>
+          ) : null}
+          {currentUser.uid == uid ? (
+            <button
+              className="flex px-2 items-center hover:text-neutrals-400"
+              onClick={tweetNow}
+            >
+              < IconBrandTwitterFilled />
+            </button>
+          ) : null}
 
-      <div className="flex flex-col flex-1 bg-neutrals-950 rounded-none min-h-0 ">
-        <div className="flex-1 flex-col overflow-y-auto p-2">
-          {messages.map((m) => (
-            <div
-              className={`chat ${m.senderId === currentUser.uid ? "chat-end" : "chat-start"
-                }`}
-              key={m.id}
-            >
-              <div
-                className={`chat-bubble ${m.senderId === currentUser.uid
-                    ? "chat-bubble-primary"
-                    : "chat-bubble bg-neutrals-800"
-                  }`}
-              >
-                {m.text}
-              </div>
-              <div className="chat-footer opacity-50">
-                {moment(m.date).fromNow()}
-              </div>
-            </div>
-          ))}
+
+
         </div>
-        <div className="p-4 pt-1">
-          <div className=" flex-shrink-0">
-            <form
-              className="join items-center justify-center bg-neutrals-900 w-full"
-              onSubmit={handleSend}
-            >
-              <input
-                id="text"
-                placeholder="Type Something"
-                className="h-16 input w-full rounded-lg text-bold pl-2 focus:outline-none"
-                onChange={(e) => setText(e.target.value)}
-                value={text}
-                required
-              />
-              <button className="join-item pr-2 rounded-full " type="submit">
-                <IconCircleArrowRight />
-              </button>
-            </form>
-          </div>
-        </div>
+        <div className="flex-1"></div>
+        <div>{moment(parseInt(time)).fromNow()}</div>
       </div>
+      {isCommented ? (
+        <div className=" border-t-2 border-t-neutrals-700">
+          {commentsList?.map((c) => (
+            <Comments
+              key={c.id}
+              uid={c.uid}
+              name={c.name}
+              content={c.content}
+              postDocId={postDocId}
+              id={c.id}
+              time={c.created_at}
+            />
+          ))}
+
+          <form className="flex p-3 pl-10" onSubmit={handleComment}>
+            <textarea
+              type="text"
+              placeholder="Type here"
+              className=" w-full h-10 bg-transparent border-b-4 border-b-neutrals-700 focus:outline-none"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              required
+            />
+            <button
+              className="btn btn-sm h-10 btn-primary join-item"
+              type="submit"
+              value="submit"
+            >
+              Post
+            </button>
+          </form>
+        </div>
+      ) : null}
     </div>
   );
 };
-export default ChartArea;
+
+export default Post;
